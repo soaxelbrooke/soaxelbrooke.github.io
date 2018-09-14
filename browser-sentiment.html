@@ -1,0 +1,131 @@
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
+        <script>
+const modelUrl = 'https://storage.googleapis.com/axelbrooke-public/tmp/tfjs_model/model.json';
+
+const neg = tf.tensor([[   0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+           0,  227,  247,   27,   63,   27,   65,  404,    4,  214,   51,
+        2334]]);
+const pos = tf.tensor([[  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+          0,   0,   0,   0, 117,  24,   5,  37, 221]]);
+
+const seqLen = 100;
+const tokenizeRegexp = new RegExp(/[\w']+|[,.?;\-()]/g);
+const tokenize = (text) => text.toLowerCase().match(tokenizeRegexp);
+const textsToIdxs = (wordIndexes, texts) => {
+    return tf.tensor(texts.map(text => {
+        const wordIdxs = tokenize(text).map(tok => (wordIndexes[tok] || 0));
+        return wordIdxs.concat(Array.from({length: seqLen - wordIdxs.length}, () => 0));
+    }));
+};
+
+let classify = console.log;
+
+let modelPromise = tf.loadModel(modelUrl);
+let wordIndexPromise = fetch('https://storage.googleapis.com/axelbrooke-public/tmp/tfjs_model/word_index.json').then(r => r.json());
+Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
+    document.getElementById('loading-section').style.display = 'none';
+    document.getElementById('classify-section').style.display = 'initial';
+    const submitButton = document.getElementById('submit-button');
+    const resultsEle = document.getElementById('results');
+
+    const makeResultSpan = (chunk, prediction) => {
+        const span = document.createElement('span');
+        span.innerText = chunk;
+        if (prediction[0] > 0.4) {
+            // negative
+            span.style.color = '#b71c1c';
+        } else if (prediction[2] > 0.8) {
+            // Positive
+            span.style.color = '#388e3c';
+        } else {
+            span.style.color = '#424242';
+        }
+        return span;
+    };
+
+    classify = (evt) => {
+        submitButton.classList.add('is-loading');
+        while (resultsEle.firstChild) {
+            resultsEle.removeChild(resultsEle.firstChild);
+        }
+
+        setTimeout(() => {
+            const text = document.getElementById('text-to-classify-textarea').value;
+            const chunks = text.split(/(?<=[.?!])/g).filter(chunk => /\w/.test(chunk));
+            const tensors = textsToIdxs(wordIndexes, chunks);
+            const results = Array.from(model.predict(tensors).dataSync()).reduce((a,b,i,g) => !(i % 3) ? a.concat([g.slice(i,i+3)]) : a, []);
+            resultsEle.style.display = 'block';
+            chunks.forEach((chunk, idx) => {
+                const prediction = results[idx];
+                resultsEle.appendChild(makeResultSpan(chunk, prediction));
+            });
+            submitButton.classList.remove('is-loading');
+        })
+    };
+
+    submitButton.onclick = classify;
+});
+
+        </script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.css" integrity="sha256-zKA1Bf41O96+gJSlkn/Bh2HATW/OhwkApPlYTp3B5O8=" crossorigin="anonymous" />
+    </head>
+    <body>
+        <section class="hero is-primary">
+            <div class="hero-body">
+              <div class="container">
+                <h1 class="title">
+                  Browser Sentiment
+                </h1>
+                <h2 class="subtitle">
+                  An exploration in inferred feelings, done on your compute.
+                </h2>
+              </div>
+            </div>
+          </section>
+
+      <section class="section" id="loading-section">
+          <div class="container">
+        <div class="notification" style="display: flex">
+            The model is loading...
+            <span class="loader" style="display:inline; margin-left: 1em;"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="classify-section" style="display: none;">
+        <div class="container">
+          <div class="field">
+            <label class="label">Message</label>
+            <div class="control">
+              <textarea rows="10" class="textarea" id="text-to-classify-textarea" placeholder="Write your message here."></textarea>
+            </div>
+          </div>
+          <div class="field">
+            <div class="control">
+                <button class="button is-primary" id="submit-button" onclick="classify">Classify</button>
+            </div>
+            </div>
+        </div>
+    </section>
+    <section class="section">
+        <div class="container" style="display: none;" id="results">
+
+        </div>
+    </section>
+    </body>
+</html>
