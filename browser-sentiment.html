@@ -3,26 +3,6 @@
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
         <script>
 const modelUrl = 'https://storage.googleapis.com/axelbrooke-public/tmp/tfjs_model/model.json';
-
-const neg = tf.tensor([[   0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-           0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
-           0,  227,  247,   27,   63,   27,   65,  404,    4,  214,   51,
-        2334]]);
-const pos = tf.tensor([[  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-          0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-          0,   0,   0,   0, 117,  24,   5,  37, 221]]);
-
 const seqLen = 100;
 const tokenizeRegexp = new RegExp(/[\w']+|[,.?;\-()]/g);
 const tokenize = (text) => text.toLowerCase().match(tokenizeRegexp);
@@ -79,6 +59,7 @@ Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
     };
 
     submitButton.onclick = classify;
+    classify();
 });
 
         </script>
@@ -112,7 +93,7 @@ Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
           <div class="field">
             <label class="label">Message</label>
             <div class="control">
-              <textarea rows="10" class="textarea" id="text-to-classify-textarea" placeholder="Write your message here."></textarea>
+              <textarea rows="10" class="textarea" id="text-to-classify-textarea" placeholder="Write your message here.">I love it!  It's okay.  It's terrible.</textarea>
             </div>
           </div>
           <div class="field">
