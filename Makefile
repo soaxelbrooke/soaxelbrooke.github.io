@@ -10,4 +10,12 @@ tfjs_model/:
 
 .PHONY: upload-model
 upload-model:
-	gsutil rm -rf gs://axelbrooke-public/tmp/tfjs_model/ && gsutil cp -r tfjs_model/ gs://axelbrooke-public/tmp/
+	echo 'Deprecated'
+	# gsutil rm -rf gs://axelbrooke-public/tmp/tfjs_model/ && gsutil cp -r tfjs_model/ gs://axelbrooke-public/tmp/
+
+.PHONY: deploy-model
+deploy-model:
+	git filter-branch --tree-filter 'rm -rf dist/tfjs-sentiment' -- --all
+	cp -r tfjs_model dist/tfjs-sentiment
+	git add dist/tfjs-sentiment
+	git commit -m 'Update model'
