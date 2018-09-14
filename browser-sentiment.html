@@ -184,89 +184,99 @@
         crossorigin="anonymous" />
 </head>
 
-<body>
-    <section class="hero is-primary">
-        <div class="hero-body">
+<body style="display: flex; min-height: 100vh; flex-direction: column;">
+    <div class="content-wrapper" style="flex: 1;">
+        <section class="hero is-primary">
+            <div class="hero-body">
+                <div class="container">
+                    <h1 class="title">
+                        Browser Sentiment
+                    </h1>
+                    <h2 class="subtitle">
+                        An exploration in inferred feelings, done on your compute.
+                    </h2>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="loading-section">
             <div class="container">
-                <h1 class="title">
-                    Browser Sentiment
-                </h1>
-                <h2 class="subtitle">
-                    An exploration in inferred feelings, done on your compute.
-                </h2>
+                <div class="notification" style="display: flex">
+                    The model is loading...
+                    <span class="loader" style="display:inline; margin-left: 1em;"></span>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <section class="section" id="loading-section">
-        <div class="container">
-            <div class="notification" style="display: flex">
-                The model is loading...
-                <span class="loader" style="display:inline; margin-left: 1em;"></span>
-            </div>
-        </div>
-    </section>
-
-    <section class="section" id="classify-section" style="display: none;">
-        <div class="container">
-            <label class="label">CSV to Deeply Introspect</label>
-            <div class="field is-grouped">
-                <div class="control">
-                    <div class="file">
-                        <label class="file-label">
-                            <input class="file-input" id="csv-file-input" type="file" name="resume">
-                            <span class="file-cta">
-                                <span class="file-icon">
-                                    <i class="fas fa-upload"></i>
+        <section class="section" id="classify-section" style="display: none;">
+            <div class="container">
+                <label class="label">CSV to Deeply Introspect</label>
+                <div class="field is-grouped">
+                    <div class="control">
+                        <div class="file">
+                            <label class="file-label">
+                                <input class="file-input" id="csv-file-input" type="file" name="resume">
+                                <span class="file-cta">
+                                    <span class="file-icon">
+                                        <i class="fas fa-upload"></i>
+                                    </span>
+                                    <span class="file-label">
+                                        Select a CSV...
+                                    </span>
                                 </span>
-                                <span class="file-label">
-                                    Select a CSV...
-                                </span>
-                            </span>
-                        </label>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <div class="select">
+                            <select id="csv-header-select" disabled>
+                                <option>Select Field...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <button disabled id="csv-submit-button" class="button is-primary">
+                            <i class="fa fa-eye" style="margin-right: 1em;"></i>
+                            Introspect
+                        </button>
+                    </div>
+                    <div class="control">
+                        <button disabled id="csv-download-button" class="button is-grey">
+                            <i class="fa fa-download" style="margin-right: 1em;"></i>
+                            Download Results
+                        </button>
                     </div>
                 </div>
-                <div class="control">
-                    <div class="select">
-                        <select id="csv-header-select" disabled>
-                            <option>Select Field...</option>
-                        </select>
+                <progress id="progress-bar" class="progress is-primary" value="0" max="1000"></progress>
+                <hr>
+                <div class="field">
+                    <label class="label">Text to Deeply Introspect</label>
+                    <div class="control">
+                        <textarea rows="10" class="textarea" id="text-to-classify-textarea" placeholder="Write your message here.">The sound quality is amazing!  Unfortunately, the styling is pretty terrible.  If you care more about looks, you may want to look elsewhere.</textarea>
                     </div>
                 </div>
-                <div class="control">
-                    <button disabled id="csv-submit-button" class="button is-primary">
-                        <i class="fa fa-eye" style="margin-right: 1em;"></i>
-                        Introspect
-                    </button>
-                </div>
-                <div class="control">
-                    <button disabled id="csv-download-button" class="button is-grey">
-                        <i class="fa fa-download" style="margin-right: 1em;"></i>
-                        Download Results
-                    </button>
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary" id="submit-button" onclick="classify"><i class="fa fa-eye"
+                                style="margin-right: 1em;"></i>Introspect</button>
+                    </div>
                 </div>
             </div>
-            <progress id="progress-bar" class="progress is-primary" value="0" max="1000"></progress>
-            <hr>
-            <div class="field">
-                <label class="label">Text to Deeply Introspect</label>
-                <div class="control">
-                    <textarea rows="10" class="textarea" id="text-to-classify-textarea" placeholder="Write your message here.">The sound quality is amazing!  Unfortunately, the styling is pretty terrible.  If you care more about looks, you may want to look elsewhere.</textarea>
-                </div>
-            </div>
-            <div class="field">
-                <div class="control">
-                    <button class="button is-primary" id="submit-button" onclick="classify"><i class="fa fa-eye" style="margin-right: 1em;"></i>Introspect</button>
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <section class="section">
-        <div class="container" style="display: none;" id="results">
+        <section class="section">
+            <div class="container" style="display: none;" id="results">
 
+            </div>
+        </section>
+    </div>
+    <footer class="footer">
+        <div class="content has-text-centered">
+            <p class="has-text-grey">By Stuart Axelbrooke.</p>
+            <p class="has-text-grey">Looking for quality sentiment at scale? Reach out at <a class="has-text-grey has-text-weight-semibold" href="https://www.thoughtvector.io">Thought
+                    Vector</a>.</p>
         </div>
-    </section>
+    </footer>
 </body>
 
 </html>
