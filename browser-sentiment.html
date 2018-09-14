@@ -7,7 +7,7 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
     <script>
-        const modelUrl = '/tfjs_model/model.json';
+        const modelUrl = '/dist/tfjs-sentiment/model.json';
         const seqLen = 100;
         const tokenizeRegexp = new RegExp(/[\w']+|[,.?;\-()]/g);
         const tokenize = (text) => (text.toLowerCase().match(tokenizeRegexp) || []);
@@ -35,7 +35,7 @@
         let classify = console.log;
 
         let modelPromise = tf.loadModel(modelUrl);
-        let wordIndexPromise = fetch('/tfjs_model/word_index.json').then(r => r.json());
+        let wordIndexPromise = fetch('/dist/tfjs-sentiment/word_index.json').then(r => r.json());
         Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
             document.getElementById('loading-section').style.display = 'none';
             document.getElementById('classify-section').style.display = 'initial';
@@ -123,7 +123,7 @@
 
             csvSubmitButton.onclick = (evt) => {
                 csvResults.push([csvHeader[csvSelectedField], 'Detractor', 'Neutral', 'Promoter']);
-                setTimeout(() => classifyBatches(0, 200));
+                setTimeout(() => classifyBatches(0, 500));
             };
 
             const classifyBatches = (startIdx, batchSize) => {
