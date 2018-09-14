@@ -72,7 +72,17 @@
 
                 setTimeout(() => {
                     const text = document.getElementById('text-to-classify-textarea').value;
-                    const chunks = text.split(/(?<=[.?!])/g).filter(chunk => /\w/.test(chunk));
+                    const chunks = text.split(/(?=[.?!])/g).reduce((agg, item) => {
+                        if (agg.length === 0) {
+                            agg.push(item);
+                        } else {
+                            if (item.length > 0) {
+                                agg[agg.length - 1] += item[0];
+                                agg.push(item.slice(1));
+                            }
+                        }
+                        return agg;
+                    }, []).filter(chunk => /\w/.test(chunk));
                     const tensors = textsToIdxs(wordIndexes, chunks);
                     const results = Array.from(model.predict(tensors).dataSync()).reduce((a, b, i, g) => !(i % 3) ? a.concat([g.slice(i, i + 3)]) : a, []);
                     resultsEle.style.display = 'block';
