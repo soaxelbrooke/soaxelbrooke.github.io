@@ -2,7 +2,7 @@
     <head>
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
         <script>
-const modelUrl = 'https://storage.googleapis.com/axelbrooke-public/tmp/tfjs_model/model.json';
+const modelUrl = '/tfjs_model/model.json';
 const seqLen = 100;
 const tokenizeRegexp = new RegExp(/[\w']+|[,.?;\-()]/g);
 const tokenize = (text) => text.toLowerCase().match(tokenizeRegexp);
@@ -16,7 +16,8 @@ const textsToIdxs = (wordIndexes, texts) => {
 let classify = console.log;
 
 let modelPromise = tf.loadModel(modelUrl);
-let wordIndexPromise = fetch('https://storage.googleapis.com/axelbrooke-public/tmp/tfjs_model/word_index.json').then(r => r.json());
+// let wordIndexPromise = fetch('https://storage.googleapis.com/axelbrooke-public/tmp/tfjs_model/word_index.json').then(r => r.json());
+let wordIndexPromise = fetch('/tfjs_model/word_index.json').then(r => r.json());
 Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
     document.getElementById('loading-section').style.display = 'none';
     document.getElementById('classify-section').style.display = 'initial';
@@ -29,12 +30,15 @@ Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
         if (prediction[0] > 0.4) {
             // negative
             span.style.color = '#b71c1c';
+            span.style['background-color'] = '#d000002b';
         } else if (prediction[2] > 0.8) {
             // Positive
             span.style.color = '#388e3c';
+            span.style['background-color'] = '#07d60738';
         } else {
             span.style.color = '#424242';
         }
+        span.title = prediction.map(num => num.toPrecision(3)).join(', ');
         return span;
     };
 
@@ -50,6 +54,10 @@ Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
             const tensors = textsToIdxs(wordIndexes, chunks);
             const results = Array.from(model.predict(tensors).dataSync()).reduce((a,b,i,g) => !(i % 3) ? a.concat([g.slice(i,i+3)]) : a, []);
             resultsEle.style.display = 'block';
+            const headerEle = document.createElement('h2');
+            headerEle.classList.add('heading');
+            headerEle.innerText = 'How They Really Feel';
+            resultsEle.appendChild(headerEle);
             chunks.forEach((chunk, idx) => {
                 const prediction = results[idx];
                 resultsEle.appendChild(makeResultSpan(chunk, prediction));
@@ -91,9 +99,9 @@ Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
       <section class="section" id="classify-section" style="display: none;">
         <div class="container">
           <div class="field">
-            <label class="label">Message</label>
+            <label class="label">Text to Deeply Introspect</label>
             <div class="control">
-              <textarea rows="10" class="textarea" id="text-to-classify-textarea" placeholder="Write your message here.">I love it!  It's okay.  It's terrible.</textarea>
+              <textarea rows="10" class="textarea" id="text-to-classify-textarea" placeholder="Write your message here.">The sound quality is amazing!  Unfortunately, the styling is pretty terrible.  If you care more about looks, you may want to look elsewhere.</textarea>
             </div>
           </div>
           <div class="field">
@@ -103,6 +111,7 @@ Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
             </div>
         </div>
     </section>
+
     <section class="section">
         <div class="container" style="display: none;" id="results">
 
