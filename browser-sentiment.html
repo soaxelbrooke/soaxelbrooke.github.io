@@ -1,113 +1,249 @@
 <html>
-    <head>
-        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
-        <script>
-const modelUrl = '/tfjs_model/model.json';
-const seqLen = 100;
-const tokenizeRegexp = new RegExp(/[\w']+|[,.?;\-()]/g);
-const tokenize = (text) => text.toLowerCase().match(tokenizeRegexp);
-const textsToIdxs = (wordIndexes, texts) => {
-    return tf.tensor(texts.map(text => {
-        const wordIdxs = tokenize(text).map(tok => (wordIndexes[tok] || 0));
-        return wordIdxs.concat(Array.from({length: seqLen - wordIdxs.length}, () => 0));
-    }));
-};
 
-let classify = console.log;
+<head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU"
+        crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.6.0/papaparse.js" integrity="sha256-pdEigE1ByxvJRy4l5GarQNKlqr0YXmlkYFUoPp0Mfxg="
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
+    <script>
+        const modelUrl = '/tfjs_model/model.json';
+        const seqLen = 100;
+        const tokenizeRegexp = new RegExp(/[\w']+|[,.?;\-()]/g);
+        const tokenize = (text) => (text.toLowerCase().match(tokenizeRegexp) || []);
+        const textsToIdxs = (wordIndexes, texts) => {
+            return tf.tensor(texts.map(tokenize).map(tokens => {
+                const wordIdxs = tokens.map(tok => (wordIndexes[tok] || 0)).slice(0, 100);
+                return wordIdxs.concat(Array.from({ length: seqLen - wordIdxs.length }, () => 0));
+            }));
+        };
 
-let modelPromise = tf.loadModel(modelUrl);
-// let wordIndexPromise = fetch('https://storage.googleapis.com/axelbrooke-public/tmp/tfjs_model/word_index.json').then(r => r.json());
-let wordIndexPromise = fetch('/tfjs_model/word_index.json').then(r => r.json());
-Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
-    document.getElementById('loading-section').style.display = 'none';
-    document.getElementById('classify-section').style.display = 'initial';
-    const submitButton = document.getElementById('submit-button');
-    const resultsEle = document.getElementById('results');
+        function download(filename, text) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
 
-    const makeResultSpan = (chunk, prediction) => {
-        const span = document.createElement('span');
-        span.innerText = chunk;
-        if (prediction[0] > 0.4) {
-            // negative
-            span.style.color = '#b71c1c';
-            span.style['background-color'] = '#d000002b';
-        } else if (prediction[2] > 0.8) {
-            // Positive
-            span.style.color = '#388e3c';
-            span.style['background-color'] = '#07d60738';
-        } else {
-            span.style.color = '#424242';
-        }
-        span.title = prediction.map(num => num.toPrecision(3)).join(', ');
-        return span;
-    };
+            element.style.display = 'none';
+            document.body.appendChild(element);
 
-    classify = (evt) => {
-        submitButton.classList.add('is-loading');
-        while (resultsEle.firstChild) {
-            resultsEle.removeChild(resultsEle.firstChild);
+            element.click();
+
+            document.body.removeChild(element);
         }
 
-        setTimeout(() => {
-            const text = document.getElementById('text-to-classify-textarea').value;
-            const chunks = text.split(/(?<=[.?!])/g).filter(chunk => /\w/.test(chunk));
-            const tensors = textsToIdxs(wordIndexes, chunks);
-            const results = Array.from(model.predict(tensors).dataSync()).reduce((a,b,i,g) => !(i % 3) ? a.concat([g.slice(i,i+3)]) : a, []);
-            resultsEle.style.display = 'block';
-            const headerEle = document.createElement('h2');
-            headerEle.classList.add('heading');
-            headerEle.innerText = 'How They Really Feel';
-            resultsEle.appendChild(headerEle);
-            chunks.forEach((chunk, idx) => {
-                const prediction = results[idx];
-                resultsEle.appendChild(makeResultSpan(chunk, prediction));
-            });
-            submitButton.classList.remove('is-loading');
-        })
-    };
 
-    submitButton.onclick = classify;
-    classify();
-});
+        let classify = console.log;
 
-        </script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.css" integrity="sha256-zKA1Bf41O96+gJSlkn/Bh2HATW/OhwkApPlYTp3B5O8=" crossorigin="anonymous" />
-    </head>
-    <body>
-        <section class="hero is-primary">
-            <div class="hero-body">
-              <div class="container">
+        let modelPromise = tf.loadModel(modelUrl);
+        let wordIndexPromise = fetch('/tfjs_model/word_index.json').then(r => r.json());
+        Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
+            document.getElementById('loading-section').style.display = 'none';
+            document.getElementById('classify-section').style.display = 'initial';
+            const submitButton = document.getElementById('submit-button');
+            const resultsEle = document.getElementById('results');
+
+            const makeResultSpan = (chunk, prediction) => {
+                const span = document.createElement('span');
+                span.innerText = chunk;
+                if (prediction[0] > 0.4) {
+                    // negative
+                    span.style.color = '#b71c1c';
+                    span.style['background-color'] = '#d000002b';
+                } else if (prediction[2] > 0.8) {
+                    // Positive
+                    span.style.color = '#388e3c';
+                    span.style['background-color'] = '#07d60738';
+                } else {
+                    span.style.color = '#424242';
+                }
+                span.title = prediction.map(num => num.toPrecision(3)).join(', ');
+                return span;
+            };
+
+            classify = (evt) => {
+                submitButton.classList.add('is-loading');
+                while (resultsEle.firstChild) {
+                    resultsEle.removeChild(resultsEle.firstChild);
+                }
+
+                setTimeout(() => {
+                    const text = document.getElementById('text-to-classify-textarea').value;
+                    const chunks = text.split(/(?<=[.?!])/g).filter(chunk => /\w/.test(chunk));
+                    const tensors = textsToIdxs(wordIndexes, chunks);
+                    const results = Array.from(model.predict(tensors).dataSync()).reduce((a, b, i, g) => !(i % 3) ? a.concat([g.slice(i, i + 3)]) : a, []);
+                    resultsEle.style.display = 'block';
+                    const headerEle = document.createElement('h2');
+                    headerEle.classList.add('heading');
+                    headerEle.innerText = 'How They Really Feel';
+                    resultsEle.appendChild(headerEle);
+                    chunks.forEach((chunk, idx) => {
+                        const prediction = results[idx];
+                        resultsEle.appendChild(makeResultSpan(chunk, prediction));
+                    });
+                    submitButton.classList.remove('is-loading');
+                });
+            };
+
+            let csvData, csvHeader, csvSelectedField, csvResults, csvLen;
+            const csvHeaderSelect = document.getElementById('csv-header-select');
+            const csvSubmitButton = document.getElementById('csv-submit-button');
+            const csvDownloadButton = document.getElementById('csv-download-button');
+            const progressBar = document.getElementById('progress-bar');
+            selectFile = (evt) => {
+                Papa.parse(evt.target.files[0], {
+                    complete: (parseResult) => {
+                        const rows = parseResult.data;
+                        csvResults = [];
+                        csvDownloadButton.disabled = true;
+                        csvHeader = rows[0];
+                        csvData = rows.slice(1).filter(row => row.length === csvHeader.length);
+                        csvLen = csvData.length;
+                        progressBar.max = csvLen;
+
+                        csvHeaderSelect.disabled = false;
+                        while (csvHeaderSelect.firstChild) {
+                            csvHeaderSelect.removeChild(csvHeaderSelect.firstChild);
+                        }
+
+                        csvHeader.forEach(field => {
+                            const option = document.createElement('option');
+                            option.textContent = field;
+                            csvHeaderSelect.appendChild(option);
+                        });
+
+                        csvSubmitButton.disabled = false;
+                    }
+                });
+            };
+            document.getElementById('csv-file-input').onchange = selectFile;
+
+            csvHeaderSelect.onchange = (evt) => {
+                csvSelectedField = csvHeader.indexOf(evt.target.value);
+            };
+
+            csvSubmitButton.onclick = (evt) => {
+                csvResults.push([csvHeader[csvSelectedField], 'Detractor', 'Neutral', 'Promoter']);
+                setTimeout(() => classifyBatches(0, 200));
+            };
+
+            const classifyBatches = (startIdx, batchSize) => {
+                console.log((new Date()).toString() + ' - Classifying batch starting at ' + startIdx.toString() + ' of size ' + batchSize.toString() + '...');
+                progressBar.value = startIdx;
+                const endIdx = startIdx + batchSize;
+                const batch = csvData.slice(startIdx, endIdx).map(row => row[csvSelectedField]);
+
+                if (batch.length === 0) {
+                    console.log((new Date()).toString() + ' - Done.');
+                    window.csvResults = csvResults;
+                    csvDownloadButton.disabled = false;
+                } else {
+                    const rawResults = model.predict(textsToIdxs(wordIndexes, batch)).dataSync();
+                    const perDocResults = rawResults.reduce((a, b, i, g) => !(i % 3) ? a.concat([g.slice(i, i + 3)]) : a, []);
+                    batch.forEach((text, idx) => {
+                        const prediction = perDocResults[idx];
+                        let row;
+                        if (prediction[0] > 0.4) {
+                            // negative
+                            row = [text, 1, 0, 0];
+                        } else if (prediction[2] > 0.8) {
+                            // Positive
+                            row = [text, 0, 0, 1];
+                        } else {
+                            row = [text, 0, 1, 0];
+                        }
+                        csvResults.push(row);
+                    });
+                    progressBar.value = endIdx;
+                    setTimeout(() => classifyBatches(endIdx, batchSize));
+                }
+            }
+
+            submitButton.onclick = classify;
+            csvDownloadButton.onclick = (evt) => {
+                download('sentiment-introspected.csv', Papa.unparse(csvResults));
+            }
+            classify();
+        });
+
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.css" integrity="sha256-zKA1Bf41O96+gJSlkn/Bh2HATW/OhwkApPlYTp3B5O8="
+        crossorigin="anonymous" />
+</head>
+
+<body>
+    <section class="hero is-primary">
+        <div class="hero-body">
+            <div class="container">
                 <h1 class="title">
-                  Browser Sentiment
+                    Browser Sentiment
                 </h1>
                 <h2 class="subtitle">
-                  An exploration in inferred feelings, done on your compute.
+                    An exploration in inferred feelings, done on your compute.
                 </h2>
-              </div>
             </div>
-          </section>
-
-      <section class="section" id="loading-section">
-          <div class="container">
-        <div class="notification" style="display: flex">
-            The model is loading...
-            <span class="loader" style="display:inline; margin-left: 1em;"></span>
-          </div>
         </div>
-      </section>
+    </section>
 
-      <section class="section" id="classify-section" style="display: none;">
+    <section class="section" id="loading-section">
         <div class="container">
-          <div class="field">
-            <label class="label">Text to Deeply Introspect</label>
-            <div class="control">
-              <textarea rows="10" class="textarea" id="text-to-classify-textarea" placeholder="Write your message here.">The sound quality is amazing!  Unfortunately, the styling is pretty terrible.  If you care more about looks, you may want to look elsewhere.</textarea>
+            <div class="notification" style="display: flex">
+                The model is loading...
+                <span class="loader" style="display:inline; margin-left: 1em;"></span>
             </div>
-          </div>
-          <div class="field">
-            <div class="control">
-                <button class="button is-primary" id="submit-button" onclick="classify">Classify</button>
+        </div>
+    </section>
+
+    <section class="section" id="classify-section" style="display: none;">
+        <div class="container">
+            <label class="label">CSV to Deeply Introspect</label>
+            <div class="field is-grouped">
+                <div class="control">
+                    <div class="file">
+                        <label class="file-label">
+                            <input class="file-input" id="csv-file-input" type="file" name="resume">
+                            <span class="file-cta">
+                                <span class="file-icon">
+                                    <i class="fas fa-upload"></i>
+                                </span>
+                                <span class="file-label">
+                                    Select a CSV...
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="control">
+                    <div class="select">
+                        <select id="csv-header-select" disabled>
+                            <option>Select Field...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control">
+                    <button disabled id="csv-submit-button" class="button is-primary">
+                        <i class="fa fa-eye" style="margin-right: 1em;"></i>
+                        Introspect
+                    </button>
+                </div>
+                <div class="control">
+                    <button disabled id="csv-download-button" class="button is-grey">
+                        <i class="fa fa-download" style="margin-right: 1em;"></i>
+                        Download Results
+                    </button>
+                </div>
             </div>
+            <progress id="progress-bar" class="progress is-primary" value="0" max="1000"></progress>
+            <hr>
+            <div class="field">
+                <label class="label">Text to Deeply Introspect</label>
+                <div class="control">
+                    <textarea rows="10" class="textarea" id="text-to-classify-textarea" placeholder="Write your message here.">The sound quality is amazing!  Unfortunately, the styling is pretty terrible.  If you care more about looks, you may want to look elsewhere.</textarea>
+                </div>
+            </div>
+            <div class="field">
+                <div class="control">
+                    <button class="button is-primary" id="submit-button" onclick="classify"><i class="fa fa-eye" style="margin-right: 1em;"></i>Introspect</button>
+                </div>
             </div>
         </div>
     </section>
@@ -117,5 +253,6 @@ Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
 
         </div>
     </section>
-    </body>
+</body>
+
 </html>
