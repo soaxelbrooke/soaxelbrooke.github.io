@@ -1,6 +1,8 @@
 <html>
 
 <head>
+        <meta http-equiv="Cache-control" content="no-cache">
+
     <meta charset="utf-8">
     <meta name="author" content="Stuart Axelbrooke">
     <meta name="description" content="High quality sentiment analysis in your browser using Tensorflow.js. An exploration in inferred feelings, done on your compute.">
@@ -11,7 +13,8 @@
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
     <script>
-        const modelUrl = '/dist/tfjs-sentiment/model.json';
+        // const modelUrl = '/dist/tfjs-sentiment/model.json';
+        const modelUrl = 'https://cdn.jsdelivr.net/npm/nn-sentiment@v1.0.0/static/model/model.json'
         const seqLen = 100;
         const tokenizeRegexp = new RegExp(/[\w']+|[,.?;\-()]/g);
         const tokenize = (text) => (text.toLowerCase().match(tokenizeRegexp) || []);
@@ -151,24 +154,25 @@
                     window.csvResults = csvResults;
                     csvDownloadButton.disabled = false;
                 } else {
-                    const rawResults = model.predict(textsToIdxs(wordIndexes, batch)).dataSync();
-                    const perDocResults = rawResults.reduce((a, b, i, g) => !(i % 3) ? a.concat([g.slice(i, i + 3)]) : a, []);
-                    batch.forEach((text, idx) => {
-                        const prediction = perDocResults[idx];
-                        let row;
-                        if (prediction[0] > 0.4) {
-                            // negative
-                            row = [text, 1, 0, 0];
-                        } else if (prediction[2] > 0.8) {
-                            // Positive
-                            row = [text, 0, 0, 1];
-                        } else {
-                            row = [text, 0, 1, 0];
-                        }
-                        csvResults.push(row);
+                    model.predict(textsToIdxs(wordIndexes, batch)).data().then(rawResults => {
+                        const perDocResults = rawResults.reduce((a, b, i, g) => !(i % 3) ? a.concat([g.slice(i, i + 3)]) : a, []);
+                        batch.forEach((text, idx) => {
+                            const prediction = perDocResults[idx];
+                            let row;
+                            if (prediction[0] > 0.4) {
+                                // negative
+                                row = [text, 1, 0, 0];
+                            } else if (prediction[2] > 0.8) {
+                                // Positive
+                                row = [text, 0, 0, 1];
+                            } else {
+                                row = [text, 0, 1, 0];
+                            }
+                            csvResults.push(row);
+                        });
+                        progressBar.value = endIdx;
+                        setTimeout(() => classifyBatches(endIdx, batchSize));
                     });
-                    progressBar.value = endIdx;
-                    setTimeout(() => classifyBatches(endIdx, batchSize));
                 }
             }
 
