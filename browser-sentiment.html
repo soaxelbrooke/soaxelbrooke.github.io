@@ -11,10 +11,10 @@
         crossorigin="anonymous" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.6.0/papaparse.js" integrity="sha256-pdEigE1ByxvJRy4l5GarQNKlqr0YXmlkYFUoPp0Mfxg="
         crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.9.0"> </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.5.2"> </script>
     <script>
         // const modelUrl = '/dist/tfjs-sentiment/model.json';
-        const modelUrl = 'https://cdn.jsdelivr.net/npm/nn-sentiment@v1.0.0/static/model/model.json'
+        const modelUrl = 'https://soaxelbrooke.github.io/dist/tfjs-sentiment/model.json'
         const seqLen = 100;
         const tokenizeRegexp = new RegExp(/[\w']+|[,.?;\-()]/g);
         const tokenize = (text) => (text.toLowerCase().match(tokenizeRegexp) || []);
@@ -41,8 +41,8 @@
 
         let classify = console.log;
 
-        let modelPromise = tf.loadModel(modelUrl);
-        let wordIndexPromise = fetch('/dist/tfjs-sentiment/word_index.json').then(r => r.json());
+        let modelPromise = tf.loadLayersModel(modelUrl);
+        let wordIndexPromise = fetch('https://soaxelbrooke.github.io/dist/tfjs-sentiment/word_index.json').then(r => r.json());
         Promise.all([modelPromise, wordIndexPromise]).then(([model, wordIndexes]) => {
             document.getElementById('loading-section').style.display = 'none';
             document.getElementById('classify-section').style.display = 'initial';
