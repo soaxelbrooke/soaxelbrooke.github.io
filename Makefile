@@ -16,6 +16,7 @@ upload-model:
 .PHONY: deploy-model
 deploy-model:
 	git filter-branch -f --tree-filter 'rm -rf dist/tfjs-sentiment' -- --all
+	mkdir -p dist/tfjs-sentiment
 	cp -r tfjs_model dist/tfjs-sentiment
 	git add dist/tfjs-sentiment
 	git commit -m 'Update model'
